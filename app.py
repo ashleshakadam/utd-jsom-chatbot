@@ -7,19 +7,27 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains import RetrievalQA
-from langchain_openrouter import ChatOpenRouter
+from langchain.chat_models import ChatOpenAI
 
 # Load environment variables
 load_dotenv()
 openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
 
-# Load or create FAISS vectorstore
+# Use OpenAI-compatible ChatOpenAI with OpenRouter endpoint
+llm = ChatOpenAI(
+    openai_api_key=openrouter_api_key,
+    openai_api_base="https://openrouter.ai/api/v1",
+    model_name="mistralai/mixtral-8x7b",
+    temperature=0.3,
+)
+
+# Load or create FAISS index
 embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 if not os.path.exists("embeddings/faiss_index"):
     loader = TextLoader("data/admissions.txt")
     docs = loader.load()
-    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    chunks = text_splitter.split_documents(docs)
+    splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    chunks = splitter.split_documents(docs)
     vectorstore = FAISS.from_documents(chunks, embedding=embedding_model)
     vectorstore.save_local("embeddings/faiss_index")
 else:
@@ -27,13 +35,10 @@ else:
 
 retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-# Set up LLM using OpenRouter
-llm = ChatOpenRouter(api_key=openrouter_api_key, model="mistralai/mixtral-8x7b")
-
 # QA chain
 qa = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents=True)
 
-# Streamlit UI
+# UI
 st.set_page_config(page_title="🤖 JSOM Chatbot – Ask Me Anything")
 st.title("🤖 JSOM Chatbot – Ask Me Anything")
 query = st.text_input("What would you like to know about JSOM?")
