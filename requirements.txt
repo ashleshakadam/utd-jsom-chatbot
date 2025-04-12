@@ -1,0 +1,10 @@
+streamlit
+langchain
+langchain-community
+langchain-ollama
+sentence-transformers
+faiss-cpu
+python-dotenv
+ollama
+torch
+numpy<2.0  # Ensures compatibility with FAISS + torch
