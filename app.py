@@ -13,7 +13,10 @@ from langchain.chains import RetrievalQA
 from langchain_openrouter import OpenRouterLLM  # ✅ Make sure this is after load_dotenv
 
 # ✅ Setup OpenRouter LLM using environment key
-llm = OpenRouterLLM(model="mistralai/mistral-7b-instruct")
+llm = OpenRouterLLM(
+    model="mistralai/mistral-7b-instruct",  # ✅ this is correct
+    api_key=os.getenv("OPENROUTER_API_KEY")  # ✅ this ensures the key is loaded
+)
 
 # ✅ Load and index documents
 loader = TextLoader("data/admissions.txt")
