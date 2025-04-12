@@ -2,4 +2,6 @@ streamlit
 python-dotenv
 langchain==0.1.16
 langchain-community==0.0.36
-openrouter==0.2.4
+langchain-openrouter==0.0.1
+faiss-cpu
+sentence-transformers
