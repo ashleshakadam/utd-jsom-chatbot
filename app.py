@@ -1,45 +1,56 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
-
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import CharacterTextSplitter
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
-from langchain.chat_models import ChatOpenAI
+from langchain.llms.base import LLM
+from typing import List
+import requests
 
-# Load environment variables
+
+# Load .env variables locally
 load_dotenv()
-openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+api_key = os.getenv("OPENROUTER_API_KEY")
 
-# Use OpenAI-compatible ChatOpenAI with OpenRouter endpoint
-llm = ChatOpenAI(
-    openai_api_key=openrouter_api_key,
-    openai_api_base="https://openrouter.ai/api/v1",
-    model_name="mistralai/mixtral-8x7b",
-    temperature=0.3,
-)
+# Define minimal OpenRouterLLM wrapper
+class OpenRouterLLM(LLM):
+    def _call(self, prompt: str, stop: List[str] = None) -> str:
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        data = {
+            "model": "mistral",  # or any OpenRouter-supported model
+            "messages": [
+                {"role": "user", "content": prompt}
+            ]
+        }
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"]
 
-# Load or create FAISS index
-embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-if not os.path.exists("embeddings/faiss_index"):
-    loader = TextLoader("data/admissions.txt")
-    docs = loader.load()
-    splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    chunks = splitter.split_documents(docs)
-    vectorstore = FAISS.from_documents(chunks, embedding=embedding_model)
-    vectorstore.save_local("embeddings/faiss_index")
-else:
-    vectorstore = FAISS.load_local("embeddings/faiss_index", embedding_model, allow_dangerous_deserialization=True)
+    @property
+    def _llm_type(self):
+        return "custom_openrouter"
 
-retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+# Build vectorstore at runtime
+loader = TextLoader("data/admissions.txt")
+docs = loader.load()
+splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+chunks = splitter.split_documents(docs)
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+vectorstore = FAISS.from_documents(chunks, embeddings)
+retriever = vectorstore.as_retriever()
 
-# QA chain
+# Setup LLM and RetrievalQA
+llm = OpenRouterLLM()
 qa = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents=True)
 
 # UI
-st.set_page_config(page_title="🤖 JSOM Chatbot – Ask Me Anything")
+st.set_page_config(page_title="🤖 JSOM Chatbot")
 st.title("🤖 JSOM Chatbot – Ask Me Anything")
 query = st.text_input("What would you like to know about JSOM?")
 
