@@ -1,6 +1,6 @@
+# .gitignore
 venv/
+*.dylib
 __pycache__/
 *.pyc
-*.pkl
-*.db
 .DS_Store
