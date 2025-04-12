@@ -2,34 +2,34 @@ import os
 import streamlit as st
 from dotenv import load_dotenv
 
-from langchain_community.document_loaders import TextLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+from langchain.vectorstores import FAISS
+from langchain.embeddings import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 
-# Load .env
+# Load environment variables
 load_dotenv()
-openrouter_key = os.getenv("OPENROUTER_API_KEY")
 
-# Load and process docs
-loader = TextLoader("data/admissions.txt")  # You can loop through all files too
-docs = loader.load()
+# Embeddings using OpenRouter
+embeddings = OpenAIEmbeddings(
+    openai_api_key=os.getenv("OPENROUTER_API_KEY"),
+    openai_api_base="https://openrouter.ai/api/v1"
+)
 
-splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
-chunks = splitter.split_documents(docs)
+# Load FAISS vectorstore
+vectorstore = FAISS.load_local("embeddings/faiss_index", embeddings, allow_dangerous_deserialization=True)
+retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-vectorstore = FAISS.from_documents(chunks, embedding=embeddings)
-retriever = vectorstore.as_retriever()
-
-# Use OpenRouter
-llm = ChatOpenAI(base_url="https://openrouter.ai/api/v1", api_key=os.getenv("OPENROUTER_API_KEY"))
+# LLM setup (ChatOpenAI via OpenRouter)
+llm = ChatOpenAI(
+    openai_api_key=os.getenv("OPENROUTER_API_KEY"),
+    openai_api_base="https://openrouter.ai/api/v1",
+    model="mistralai/mistral-7b-instruct"
+)
 
 qa = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents=True)
 
-# Streamlit UI
+# UI
 st.set_page_config(page_title="🤖 JSOM Chatbot – Ask Me Anything")
 st.title("🤖 JSOM Chatbot – Ask Me Anything")
 
