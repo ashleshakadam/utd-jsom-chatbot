@@ -2,38 +2,40 @@ import os
 import streamlit as st
 from dotenv import load_dotenv
 
-from langchain_community.vectorstores import FAISS
+from langchain_community.document_loaders import TextLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.chat_models import ChatOpenAI
+from langchain_community.vectorstores import FAISS
+from langchain_openrouter import ChatOpenRouter
 from langchain.chains import RetrievalQA
 
-# Load environment variables
+# Load .env
 load_dotenv()
+openrouter_key = os.getenv("OPENROUTER_API_KEY")
 
-# Load FAISS vectorstore
-vectorstore = FAISS.load_local(
-    "embeddings/faiss_index",
-    embeddings=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"),
-    allow_dangerous_deserialization=True
+# Load and process docs
+loader = TextLoader("data/admissions.txt")  # You can loop through all files too
+docs = loader.load()
+
+splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
+chunks = splitter.split_documents(docs)
+
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+vectorstore = FAISS.from_documents(chunks, embedding=embeddings)
+retriever = vectorstore.as_retriever()
+
+# Use OpenRouter
+llm = ChatOpenRouter(
+    openrouter_api_key=openrouter_key,
+    model="mistralai/mixtral-8x7b"
 )
-retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-# 🔑 Load OpenRouter API key from Streamlit Secrets
-openrouter_api_key = st.secrets["OPENROUTER_API_KEY"]
-
-# ✅ Use OpenRouter API endpoint with Langchain
-llm = ChatOpenAI(
-    openai_api_key=openrouter_api_key,
-    openai_api_base="https://openrouter.ai/api/v1",
-    model_name="mistralai/mistral-7b-instruct"
-)
-
-# QA chain
 qa = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents=True)
 
 # Streamlit UI
 st.set_page_config(page_title="🤖 JSOM Chatbot – Ask Me Anything")
 st.title("🤖 JSOM Chatbot – Ask Me Anything")
+
 query = st.text_input("What would you like to know about JSOM?")
 
 if query:
