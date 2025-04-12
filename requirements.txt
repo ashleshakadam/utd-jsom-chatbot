@@ -1,7 +1,7 @@
 streamlit
 langchain==0.1.16
 langchain-community==0.0.36
-langchain-openrouter==0.0.1
-python-dotenv
 faiss-cpu
+python-dotenv
 sentence-transformers
+openai

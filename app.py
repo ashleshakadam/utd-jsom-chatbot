@@ -6,7 +6,7 @@ from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_openrouter import ChatOpenRouter
+from langchain.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 
 # Load .env
@@ -25,10 +25,7 @@ vectorstore = FAISS.from_documents(chunks, embedding=embeddings)
 retriever = vectorstore.as_retriever()
 
 # Use OpenRouter
-llm = ChatOpenRouter(
-    openrouter_api_key=openrouter_key,
-    model="mistralai/mixtral-8x7b"
-)
+llm = ChatOpenAI(base_url="https://openrouter.ai/api/v1", api_key=os.getenv("OPENROUTER_API_KEY"))
 
 qa = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents=True)
 
