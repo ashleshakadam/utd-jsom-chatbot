@@ -4,30 +4,45 @@ from dotenv import load_dotenv
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
-from langchain_openrouter import OpenRouterLLM
+from openrouter import OpenRouterLLM
 
 # Load environment variables
 load_dotenv()
+openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
 
-# Initialize FAISS from saved index
+# Embeddings and vectorstore
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-vectorstore = FAISS.load_local("embeddings/faiss_index", embeddings, allow_dangerous_deserialization=True)
+
+# Dynamically load and create FAISS index if not already created
+if not os.path.exists("embeddings/faiss_index"):
+    from langchain_community.document_loaders import TextLoader
+    from langchain.text_splitter import CharacterTextSplitter
+
+    loader = TextLoader("data/admissions.txt")
+    docs = loader.load()
+    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    chunks = text_splitter.split_documents(docs)
+    vectorstore = FAISS.from_documents(chunks, embedding=embeddings)
+    vectorstore.save_local("embeddings/faiss_index")
+else:
+    vectorstore = FAISS.load_local("embeddings/faiss_index", embeddings, allow_dangerous_deserialization=True)
+
 retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-# ✅ Setup OpenRouter LLM
+# Set up OpenRouter LLM
 llm = OpenRouterLLM(
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-    model="mistralai/mistral-7b-instruct"
+    api_key=openrouter_api_key,
+    model="mistralai/mixtral-8x7b",
 )
 
-# Build QA chain
+# Retrieval QA
 qa = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents=True)
 
-# Streamlit app
+# Streamlit UI
 st.set_page_config(page_title="🤖 JSOM Chatbot – Ask Me Anything")
 st.title("🤖 JSOM Chatbot – Ask Me Anything")
-
 query = st.text_input("What would you like to know about JSOM?")
+
 if query:
     with st.spinner("Thinking..."):
         result = qa.invoke(query)
