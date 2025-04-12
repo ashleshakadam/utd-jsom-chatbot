@@ -1,22 +1,31 @@
 import os
 import streamlit as st
-from dotenv import load_dotenv
 import requests
+from dotenv import load_dotenv
+
+from langchain_community.document_loaders import TextLoader
+from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
-from langchain_core.documents import Document
 
-# Load environment variables from .env file
+# Load environment variable
 load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-# Load FAISS vectorstore from local directory
+# Load and split documents
+loader = TextLoader("data/admissions.txt")
+documents = loader.load()
+
+text_splitter = CharacterTextSplitter(chunk_size=800, chunk_overlap=100)
+docs = text_splitter.split_documents(documents)
+
+# Build embeddings and FAISS vectorstore at runtime
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-vectorstore = FAISS.load_local("embeddings/faiss_index", embeddings, allow_dangerous_deserialization=True)
+vectorstore = FAISS.from_documents(docs, embeddings)
 retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-# Query OpenRouter API directly via HTTPS
+# OpenRouter query function
 def query_openrouter(prompt, api_key):
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
@@ -39,21 +48,17 @@ st.title("🤖 JSOM Chatbot – Ask Me Anything")
 query = st.text_input("What would you like to know about JSOM?")
 
 if query:
-    with st.spinner("Searching knowledge base..."):
+    with st.spinner("Searching JSOM knowledge base..."):
         try:
-            # Retrieve relevant chunks
             docs = retriever.get_relevant_documents(query)
             context = "\n\n".join(doc.page_content for doc in docs)
 
-            # Append context to the prompt
-            full_prompt = f"Use the following JSOM information to answer:\n\n{context}\n\nQuestion: {query}"
-            answer = query_openrouter(full_prompt, OPENROUTER_API_KEY)
+            prompt = f"Use the following JSOM information to answer:\n\n{context}\n\nQuestion: {query}"
+            answer = query_openrouter(prompt, OPENROUTER_API_KEY)
 
-            # Display answer
             st.markdown(f"**Answer:** {answer}")
 
-            # Display source chunks
-            with st.expander("📄 Context Chunks Used"):
+            with st.expander("📄 Source Chunks"):
                 for i, doc in enumerate(docs):
                     st.markdown(f"**Chunk {i+1}:** {doc.page_content.strip()}")
 
