@@ -5,4 +5,5 @@ jq
 langchain
 langchain-community
 sentence-transformers
-faiss-cpu
+torch==2.1.0
+faiss-cpu==1.7.4
