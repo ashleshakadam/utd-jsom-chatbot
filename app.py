@@ -15,7 +15,7 @@ load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 # ==== Load and preprocess website content ====
-loader = JSONLoader(file_path="data/full_site.json", jq_schema=".values()", text_content=True)
+loader = JSONLoader(file_path="data/full_site.json", jq_schema=".[]", text_content=True)
 documents = loader.load()
 
 text_splitter = CharacterTextSplitter(chunk_size=800, chunk_overlap=100)
