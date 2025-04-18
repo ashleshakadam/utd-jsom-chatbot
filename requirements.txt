@@ -1,7 +1,8 @@
-streamlit
-python-dotenv
+streamlit==1.33.0
 requests
-langchain==0.1.16
-langchain-community==0.0.36
+python-dotenv
+jq
+langchain
+langchain-community
 sentence-transformers
 faiss-cpu
