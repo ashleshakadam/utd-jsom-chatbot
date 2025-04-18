@@ -11,12 +11,20 @@ import requests
 load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-# Load FAISS vectorstore
-vectorstore = FAISS.load_local(
-    "embeddings/faiss_index",
-    HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"),
-    allow_dangerous_deserialization=True,
-)
+from langchain_community.document_loaders import JSONLoader
+from langchain.text_splitter import CharacterTextSplitter
+
+# Load latest crawled site content
+loader = JSONLoader(file_path="data/full_site.json", jq_schema=".values()", text_content=True)
+documents = loader.load()
+
+# Split into manageable chunks
+text_splitter = CharacterTextSplitter(chunk_size=800, chunk_overlap=100)
+docs = text_splitter.split_documents(documents)
+
+# Create embeddings & vectorstore dynamically
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+vectorstore = FAISS.from_documents(docs, embeddings)
 retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
 # Define query function
