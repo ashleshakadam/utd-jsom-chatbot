@@ -1,83 +1,80 @@
-#### JSOM Chatbot – Ask Me Anything
+# UTD JSOM Chatbot
 
-A local AI-powered chatbot designed to answer questions about the Naveen Jindal School of Management (JSOM) at The University of Texas at Dallas. Built using LangChain, FAISS, Streamlit, and Mistral (via Ollama).
+## Overview
+A retrieval-augmented chatbot built to answer questions over university and school-related content using semantic search and local language model inference.
 
-#### Features
+The project demonstrates an end-to-end GenAI pipeline that combines document ingestion, embedding generation, vector retrieval, and answer synthesis in an interactive application.
 
-- 🔍 Vector search using FAISS
-- 📄 Local embeddings via HuggingFace transformers
-- 💬 Natural language QA with Mistral LLM via Ollama
-- 🌐 Streamlit-powered web app
-- 🧠 Context-aware document querying
+## Business Problem
+Students and stakeholders often need quick answers from large collections of institutional documents, but relevant information is typically distributed across PDFs, webpages, and long-form text.
 
-#### Project Structure
+Traditional keyword search struggles with paraphrased questions, multi-step retrieval, and context preservation.
+
+## Solution
+This project implements a RAG system that:
+- ingests document collections
+- chunks and embeds text
+- stores embeddings in FAISS
+- retrieves semantically relevant context
+- generates grounded responses using a local language model
+
+## Architecture
+The application is built around a standard retrieval pipeline:
+
+- document ingestion and preprocessing
+- chunking and embedding generation
+- vector storage with FAISS
+- query embedding and similarity retrieval
+- answer generation using Mistral through Ollama
+- Streamlit interface for user interaction
+
+## Methodology
+
+### Retrieval Layer
+Documents are embedded and stored in a vector index to support semantic similarity search.
+
+### Prompt Construction
+Relevant chunks are injected into the response prompt to ground model outputs in retrieved evidence.
+
+### Generation Layer
+A local LLM is used to generate answers over retrieved context rather than answering from parametric memory alone.
+
+### User Interface
+A Streamlit application provides a simple front end for question submission and answer delivery.
+
+## Results
+The system demonstrates:
+- improved answer relevance over naive keyword search
+- practical retrieval-augmented response generation over institutional content
+- a deployable local GenAI workflow using open-source tools
+
+## Tech Stack
+Python, LangChain, FAISS, Streamlit, Ollama, Mistral
+
+## Repository Structure
 ```text
-jsom_chatbot/
-│
-├── app.py                  # Streamlit frontend
-├── scripts/
-│   └── build_vectorstore.py  # Script to embed docs + build FAISS index
+utd-jsom-chatbot/
+├── app/
 ├── data/
-│   └── admissions.txt       # Raw scraped JSOM content
 ├── embeddings/
-│   └── faiss_index          # Vector store (auto-generated)
-├── .env                    # Your environment variables (e.g., API keys)
-└── requirements.txt        # Dependencies
+├── vectorstore/
+├── utils/
+└── README.md
 ```
 
-#### Setup Instructions
-
-##### 1. Clone the Repo
-
-```bash
+## How to Run
+```text
 git clone https://github.com/ashleshakadam/utd-jsom-chatbot.git
-cd jsom-chatbot
-
-2. Create & Activate a Virtual Environment
-
-python3 -m venv venv
-source venv/bin/activate
-
-3. Install Requirements
-
+cd utd-jsom-chatbot
 pip install -r requirements.txt
-
-4. Setup Ollama (Mistral)
-
-Install Ollama:
-
-brew install ollama
-ollama serve
-
-Then pull the model:
-
-ollama run mistral
-
-5. Build the Vectorstore
-
-python scripts/build_vectorstore.py
-
-6. Run the Chatbot
-
 streamlit run app.py
-
-Then visit 👉 http://localhost:8501
-
- Environment Variables
-
-Create a .env file in your project root with the following:
 ```
-##### Acknowledgments
-	•	LangChain
-	•	FAISS
-	•	Sentence Transformers
-	•	Ollama
-	•	Streamlit
 
-#####  Questions or Contributions?
+## Future Improvements
+	•	add source citation display in responses
+	•	evaluate retrieval quality with benchmark queries
+	•	introduce reranking for improved context selection
+	•	support hybrid retrieval over structured and unstructured sources
 
-Feel free to open an issue or submit a PR. Let’s make academic info more accessible!
-
-##### Author
-
+## Author
 Ashlesha Kadam
