@@ -1,10 +1,8 @@
-# 🤖 JSOM Chatbot – Ask Me Anything
+#### JSOM Chatbot – Ask Me Anything
 
 A local AI-powered chatbot designed to answer questions about the Naveen Jindal School of Management (JSOM) at The University of Texas at Dallas. Built using LangChain, FAISS, Streamlit, and Mistral (via Ollama).
 
----
-
-## 🚀 Features
+#### Features
 
 - 🔍 Vector search using FAISS
 - 📄 Local embeddings via HuggingFace transformers
@@ -12,10 +10,8 @@ A local AI-powered chatbot designed to answer questions about the Naveen Jindal 
 - 🌐 Streamlit-powered web app
 - 🧠 Context-aware document querying
 
----
-
-## 📁 Project Structure
-
+#### Project Structure
+```text
 jsom_chatbot/
 │
 ├── app.py                  # Streamlit frontend
@@ -27,12 +23,11 @@ jsom_chatbot/
 │   └── faiss_index          # Vector store (auto-generated)
 ├── .env                    # Your environment variables (e.g., API keys)
 └── requirements.txt        # Dependencies
+```
 
----
+#### Setup Instructions
 
-## 🔧 Setup Instructions
-
-### 1. Clone the Repo
+##### 1. Clone the Repo
 
 ```bash
 git clone https://github.com/ashleshakadam/utd-jsom-chatbot.git
@@ -68,36 +63,21 @@ streamlit run app.py
 
 Then visit 👉 http://localhost:8501
 
-⸻
-
-⚙️ Environment Variables
+ Environment Variables
 
 Create a .env file in your project root with the following:
-
-# Not needed with Ollama but helpful for optional OpenAI fallback
-OPENAI_API_KEY=sk-xxxxx...
-
-
-
-⸻
-
-📚 Acknowledgments
+```
+##### Acknowledgments
 	•	LangChain
 	•	FAISS
 	•	Sentence Transformers
 	•	Ollama
 	•	Streamlit
 
-⸻
-
-💬 Questions or Contributions?
+#####  Questions or Contributions?
 
 Feel free to open an issue or submit a PR. Let’s make academic info more accessible!
 
-⸻
+##### Author
 
-🧠 Author
-
-Built with ❤️ by Ashlesha Kadam
-
----
+Ashlesha Kadam
